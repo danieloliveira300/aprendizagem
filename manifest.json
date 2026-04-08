@@ -1,0 +1,21 @@
+{
+  "name": "Aventura do Saber",
+  "short_name": "Aventura",
+  "description": "Apoio à aprendizagem para crianças com autismo e deficiência intelectual",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#a1c4fd",
+  "theme_color": "#4CAF50",
+  "icons": [
+    {
+      "src": "img/star.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "img/star.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
