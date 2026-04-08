@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Aventura do Saber</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 2vmin;
+      touch-action: manipulation;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .screen {
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 2vmin;
+      box-sizing: border-box;
+    }
+    .screen.active {
+      opacity: 1;
+      display: flex;
+    }
+    h1 {
+      font-size: 6vmin;
+      color: #333;
+      text-align: center;
+      margin-bottom: 3vmin;
+    }
+    .menu, .game {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 3vmin;
+      width: 100%;
+      max-width: 1200px;
+    }
+    .button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 3vmin;
+      font-size: 4vmin;
+      border: none;
+      border-radius: 1vmin;
+      cursor: pointer;
+      width: 30vmin;
+      text-align: center;
+      touch-action: manipulation;
+      transition: transform 0.1s;
+    }
+    .button:hover {
+      background-color: #45a049;
+    }
+    .button:active {
+      transform: scale(0.95);
+    }
+    .option {
+      background-color: #2196F3;
+      color: white;
+      padding: 1vmin;
+      font-size: 8vmin;
+      border-radius: 1vmin;
+      cursor: pointer;
+      width: 20vmin;
+      height: 20vmin;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      touch-action: manipulation;
+      transition: transform 0.1s;
+    }
+    .option:hover {
+      background-color: #1e88e5;
+    }
+    .option:active {
+      transform: scale(0.95);
+    }
+    .image-option {
+      width: 20vmin;
+      height: 20vmin;
+      border-radius: 1vmin;
+      cursor: pointer;
+      background-color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+      transition: transform 0.1s;
+    }
+    .image-option img {
+      max-width: 16vmin;
+      max-height: 16vmin;
+      object-fit: contain;
+    }
+    .image-option:active {
+      transform: scale(0.95);
+    }
+    .color-option {
+      width: 20vmin;
+      height: 20vmin;
+      border-radius: 1vmin;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform 0.1s;
+    }
+    .color-option:active {
+      transform: scale(0.95);
+    }
+    #score {
+      font-size: 4vmin;
+      color: #333;
+      margin: 3vmin 0;
+    }
+    #question {
+      font-size: 6vmin;
+      color: #333;
+      margin-bottom: 3vmin;
+      text-align: center;
+    }
+    #feedback {
+      font-size: 4vmin;
+      margin-top: 3vmin;
+    }
+    #feedback.correct::before {
+      content: '✅ ';
+    }
+    #feedback.wrong::before {
+      content: '❌ ';
+    }
+    #history-screen {
+      width: 90%;
+      max-width: 1200px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      border-radius: 1vmin;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 2vmin;
+      font-size: 3.5vmin;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    #welcome-screen {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+      text-align: center;
+      padding: 2vmin;
+    }
+    #welcome-screen h1 {
+      font-size: 8vmin;
+      color: #ffffff;
+      text-shadow: 2px 2px 4px rgba(0, 128, 255, 0.5);
+      margin-bottom: 5vmin;
+    }
+    #welcome-screen .button {
+      background-color: #ffca28;
+      color: #333;
+      font-size: 5vmin;
+      width: 40vmin;
+      padding: 3vmin;
+      border-radius: 1.5vmin;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    #welcome-screen .button:hover {
+      background-color: #ffb300;
+    }
+    #welcome-screen .credit {
+      font-size: 3vmin;
+      color: #ffffff;
+      text-shadow: 1px 1px 2px rgba(0, 128, 255, 0.5);
+      margin-top: 3vmin;
+      text-align: center;
+    }
+    #name-screen {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+      text-align: center;
+      padding: 2vmin;
+      position: relative;
+      top: 10vh;
+    }
+    #name-screen h1 {
+      font-size: 7vmin;
+      color: #ffffff;
+      text-shadow: 2px 2px 4px rgba(0, 128, 255, 0.5);
+      margin-bottom: 3vmin;
+    }
+    #name-input {
+      width: 50vmin;
+      padding: 3vmin;
+      font-size: 5vmin;
+      border: 2px solid #333;
+      border-radius: 1vmin;
+      margin-bottom: 3vmin;
+      text-align: center;
+    }
+    #name-error {
+      font-size: 4vmin;
+      color: red;
+      margin-bottom: 3vmin;
+      display: none;
+    }
+    #name-screen .button {
+      background-color: #ffca28;
+      color: #333;
+      font-size: 5vmin;
+      width: 40vmin;
+      padding: 3vmin;
+      border-radius: 1.5vmin;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    #name-screen .button:hover {
+      background-color: #ffb300;
+    }
+    #mode-screen {
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+      text-align: center;
+      padding: 2vmin;
+    }
+    #mode-screen h1 {
+      font-size: 7vmin;
+      color: #ffffff;
+      text-shadow: 2px 2px 4px rgba(0, 128, 255, 0.5);
+      margin-bottom: 3vmin;
+    }
+    #mode-screen .menu {
+      flex-direction: column;
+      gap: 2vmin;
+    }
+    #mode-screen .button {
+      background-color: #4CAF50;
+      color: white;
+      font-size: 4vmin;
+      width: 50vmin;
+      padding: 3vmin;
+      border-radius: 1vmin;
+    }
+    #mode-screen .button:hover {
+      background-color: #45a049;
+    }
+
+    /* Media Queries para telas maiores e rotação */
+    @media (min-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+      h1 {
+        font-size: 3rem;
+      }
+      .button {
+        font-size: 1.5rem;
+        width: 15rem;
+        padding: 1rem;
+      }
+      .option, .image-option, .color-option {
+        width: 10rem;
+        height: 10rem;
+        font-size: 4rem;
+      }
+      .image-option img {
+        max-width: 8rem;
+        max-height: 8rem;
+      }
+      #question, #score, #feedback {
+        font-size: 2rem;
+      }
+      #name-input {
+        width: 20rem;
+        font-size: 1.5rem;
+        padding: 0.5rem;
+      }
+      #welcome-screen h1, #name-screen h1, #mode-screen h1 {
+        font-size: 4rem;
+      }
+      #welcome-screen .credit {
+        font-size: 1rem;
+      }
+      #mode-screen .button {
+        width: 20rem;
+        font-size: 1.5rem;
+      }
+      th, td {
+        font-size: 1.2rem;
+        padding: 0.5rem;
+      }
+    }
+
+    @media (orientation: landscape) {
+      .menu, .game {
+        flex-direction: row;
+      }
+      #name-screen {
+        top: 5vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="welcome-screen" class="screen active">
+    <h1>Aventura do Saber</h1>
+    <button id="start-button" class="button" onclick="showNameScreen()">Iniciar</button>
+    <p class="credit"> Desenvolvido  Daniel Oliveira para apoiar crianças com autismo e deficiência intelectual</p>
+  </div>
+
+  <div id="name-screen" class="screen">
+    <h1>Digite seu Nome</h1>
+    <input type="text" id="name-input" placeholder="Digite seu nome" maxlength="20">
+    <div id="name-error">Por favor, digite um nome válido!</div>
+    <button class="button" onclick="saveName()">Confirmar</button>
+  </div>
+
+  <div id="mode-screen" class="screen">
+    <h1 id="mode-title">Escolha uma Aventura</h1>
+    <div class="menu">
+      <button class="button" onclick="startGame('alphabet')">Conhecendo o Alfabeto</button>
+      <button class="button" onclick="startGame('numbers')">Conhecendo os Números</button>
+      <button class="button" onclick="startGame('colors')">Conhecendo as Cores</button>
+      <button class="button" onclick="startGame('fruits')">Conhecendo as Frutas</button>
+      <button class="button" onclick="startGame('shapes')">Conhecendo as Figuras</button>
+      <button class="button" onclick="showHistory()">Ver Histórico</button>
+      <button class="button" onclick="exportHistory()">Exportar Histórico (CSV)</button>
+      <button class="button" onclick="exportHistoryToPDF()">Exportar Histórico (PDF)</button>
+      <button class="button" onclick="toggleSound()">Som: Ligado</button>
+      <button class="button" onclick="toggleNarration()">Narração: Ligada</button>
+    </div>
+  </div>
+
+  <div id="game-screen" class="screen">
+    <h1 id="game-title"></h1>
+    <div id="score">Pontuação: 0</div>
+    <div id="question"></div>
+    <div class="game" id="options"></div>
+    <div id="feedback"></div>
+    <button class="button" onclick="backToModes()">Voltar</button>
+  </div>
+
+  <div id="history-screen" class="screen">
+    <h1>Histórico de Desempenho</h1>
+    <table id="history-table">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Modalidade</th>
+          <th>Pontuação</th>
+          <th>Acertos</th>
+          <th>Erros</th>
+          <th>Aluno</th>
+        </tr>
+      </thead>
+      <tbody id="history-body"></tbody>
+    </table>
+    <button class="button" onclick="backToModes()" style="margin-top: 3vmin;">Voltar</button>
+    <button class="button" onclick="exportHistoryToPDF()" style="margin-top: 3vmin;">Exportar Histórico em PDF</button>
+  </div>
+
+  <audio id="correct-sound" src="audio/chime.mp3"></audio>
+  <audio id="wrong-sound" src="audio/soft_pop.mp3"></audio>
+
+  <script>
+    let score = 0;
+    let currentAnswer = '';
+    let currentMode = '';
+    let acertos = 0;
+    let erros = 0;
+    let currentStudentName = '';
+    let soundEnabled = true;
+    let narrationEnabled = true;
+    let isSpeaking = false;
+
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const numbers = [
+      { value: 1, display: '1' },
+      { value: 2, display: '2' },
+      { value: 3, display: '3' },
+      { value: 4, display: '4' },
+      { value: 5, display: '5' }
+    ];
+    const colors = [
+      { name: 'Vermelho', color: '#FF0000' },
+      { name: 'Azul', color: '#0000FF' },
+      { name: 'Amarelo', color: '#FFFF00' },
+      { name: 'Verde', color: '#008000' },
+      { name: 'Roxo', color: '#800080' }
+    ];
+    const colorMixes = [
+      { question: 'Azul + Amarelo', answer: 'Verde' },
+      { question: 'Vermelho + Azul', answer: 'Roxo' },
+      { question: 'Vermelho + Amarelo', answer: 'Laranja' }
+    ];
+    const fruits = [
+      { name: 'Maçã', image: 'img/apple.png' },
+      { name: 'Banana', image: 'img/banana.png' },
+      { name: 'Laranja', image: 'img/orange.png' },
+      { name: 'Uva', image: 'img/grape.png' },
+      { name: 'Morango', image: 'img/strawberry.png' }
+    ];
+    const shapes = [
+      { name: 'Círculo', image: 'img/circle.png' },
+      { name: 'Quadrado', image: 'img/square.png' },
+      { name: 'Triângulo', image: 'img/triangle.png' },
+      { name: 'Retângulo', image: 'img/rectangle.png' },
+      { name: 'Estrela', image: 'img/star.png' }
+    ];
+
+    // Pré-carregamento de recursos
+    function preloadResources() {
+      try {
+        const images = fruits.concat(shapes).map(item => item.image);
+        const audios = ['audio/chime.mp3', 'audio/soft_pop.mp3'];
+        images.forEach(src => {
+          const img = new Image();
+          img.src = src;
+          img.onerror = () => console.error(`Erro ao pré-carregar imagem: ${src}`);
+        });
+        audios.forEach(src => {
+          const audio = new Audio(src);
+          audio.onerror = () => console.error(`Erro ao pré-carregar áudio: ${src}`);
+        });
+        speak('Bem-vindo à Aventura do Saber! Desenvolvido por Daniel da Silva Oliveira para apoiar crianças com autismo e deficiência intelectual.');
+      } catch (e) {
+        console.error('Erro em preloadResources:', e);
+      }
+    }
+
+    // Inicializar eventos após o carregamento
+    function init() {
+      const startButton = document.getElementById('start-button');
+      if (startButton) {
+        startButton.addEventListener('click', showNameScreen);
+        startButton.addEventListener('touchstart', showNameScreen); // Suporte a toque
+      } else {
+        console.error('Botão de iniciar não encontrado!');
+      }
+      preloadResources();
+    }
+    window.addEventListener('load', init);
+
+    // Inicializar IndexedDB
+    let db;
+    const request = indexedDB.open('AlfabetizacaoDB', 3);
+
+    request.onupgradeneeded = function(event) {
+      db = event.target.result;
+      if (!db.objectStoreNames.contains('desempenho')) {
+        const desempenhoStore = db.createObjectStore('desempenho', { keyPath: 'id', autoIncrement: true });
+        desempenhoStore.createIndex('data', 'data', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('aluno')) {
+        const alunoStore = db.createObjectStore('aluno', { keyPath: 'id', autoIncrement: true });
+        alunoStore.createIndex('nome', 'nome', { unique: false });
+      }
+    };
+
+    request.onsuccess = function(event) {
+      db = event.target.result;
+    };
+
+    request.onerror = function(event) {
+      console.error('Erro ao abrir o banco de dados:', event.target.errorCode);
+      alert('Não foi possível salvar os dados. O progresso será mantido apenas nesta sessão.');
+    };
+
+    // Ajustar volume dos sons
+    const correctSound = document.getElementById('correct-sound');
+    const wrongSound = document.getElementById('wrong-sound');
+    correctSound.volume = 0.7;
+    wrongSound.volume = 0.7;
+
+    // Função para narração
+    function speak(text) {
+      if (!narrationEnabled || isSpeaking || !window.speechSynthesis) {
+        if (!window.speechSynthesis) console.warn('Narração não suportada neste dispositivo.');
+        return;
+      }
+      isSpeaking = true;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'pt-BR';
+      utterance.volume = 0.7;
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.onend = () => { isSpeaking = false; };
+      speechSynthesis.speak(utterance);
+    }
+
+    // Função para transição de telas
+    function transitionToScreen(showId, hideIds) {
+      try {
+        hideIds.forEach(id => {
+          const screen = document.getElementById(id);
+          if (screen) {
+            screen.classList.remove('active');
+            setTimeout(() => { screen.style.display = 'none'; }, 500);
+          } else {
+            console.warn(`Tela com ID ${id} não encontrada`);
+          }
+        });
+        const showScreen = document.getElementById(showId);
+        if (showScreen) {
+          showScreen.style.display = 'flex';
+          setTimeout(() => { showScreen.classList.add('active'); }, 10);
+        } else {
+          console.error(`Tela com ID ${showId} não encontrada`);
+        }
+      } catch (e) {
+        console.error('Erro em transitionToScreen:', e);
+      }
+    }
+
+    function showNameScreen() {
+      try {
+        console.log('Botão Iniciar clicado');
+        transitionToScreen('name-screen', ['welcome-screen', 'mode-screen', 'game-screen', 'history-screen']);
+        const nameInput = document.getElementById('name-input');
+        if (nameInput) {
+          nameInput.focus();
+        } else {
+          console.error('Elemento name-input não encontrado');
+        }
+      } catch (e) {
+        console.error('Erro em showNameScreen:', e);
+        alert('Erro ao abrir a tela de nome. Tente novamente.');
+      }
+    }
+
+    function saveName() {
+      const nameInput = document.getElementById('name-input').value.trim();
+      const errorDiv = document.getElementById('name-error');
+      if (nameInput.length < 1 || nameInput.length > 20) {
+        errorDiv.textContent = 'Por favor, digite um nome válido (1-20 caracteres)!';
+        errorDiv.style.display = 'block';
+        return;
+      }
+      errorDiv.style.display = 'none';
+      currentStudentName = nameInput;
+
+      try {
+        const transaction = db.transaction(['aluno'], 'readwrite');
+        const store = transaction.objectStore('aluno');
+        const alunoData = { nome: currentStudentName, timestamp: new Date().toISOString() };
+        store.add(alunoData);
+      } catch (e) {
+        console.error('Erro ao salvar nome no IndexedDB:', e);
+      }
+
+      transitionToScreen('mode-screen', ['welcome-screen', 'name-screen', 'game-screen', 'history-screen']);
+      document.getElementById('mode-title').textContent = `Escolha uma Aventura, ${currentStudentName}!`;
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const button = document.querySelector('#mode-screen .menu .button:nth-last-child(2)');
+      button.textContent = `Som: ${soundEnabled ? 'Ligado' : 'Desligado'}`;
+    }
+
+    function toggleNarration() {
+      narrationEnabled = !narrationEnabled;
+      const button = document.querySelector('#mode-screen .menu .button:last-child');
+      button.textContent = `Narração: ${narrationEnabled ? 'Ligada' : 'Desligada'}`;
+    }
+
+    function startGame(mode) {
+      transitionToScreen('game-screen', ['welcome-screen', 'name-screen', 'mode-screen', 'history-screen']);
+      score = 0;
+      acertos = 0;
+      erros = 0;
+      currentMode = mode;
+      updateScore();
+
+      document.getElementById('game-title').textContent = {
+        alphabet: 'Conhecendo o Alfabeto',
+        numbers: 'Conhecendo os Números',
+        colors: 'Conhecendo as Cores',
+        fruits: 'Conhecendo as Frutas',
+        shapes: 'Conhecendo as Figuras'
+      }[mode];
+
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      const optionsContainer = document.getElementById('options');
+      optionsContainer.innerHTML = '';
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('feedback').className = '';
+
+      const maxOptions = erros > acertos ? 3 : 4;
+
+      if (currentMode === 'alphabet') {
+        currentAnswer = alphabet[Math.floor(Math.random() * alphabet.length)];
+        document.getElementById('question').textContent = `Toque na letra ${currentAnswer}`;
+        speak(`Toque na letra ${currentAnswer}`);
+        let options = [currentAnswer];
+        while (options.length < maxOptions) {
+          let randomItem = alphabet[Math.floor(Math.random() * alphabet.length)];
+          if (!options.includes(randomItem)) options.push(randomItem);
+        }
+        options = options.sort(() => Math.random() - 0.5);
+        options.forEach(item => {
+          const button = document.createElement('div');
+          button.className = 'option';
+          button.textContent = item;
+          button.onclick = () => checkAnswer(item);
+          optionsContainer.appendChild(button);
+        });
+      } else if (currentMode === 'numbers') {
+        const selectedNumber = numbers[Math.floor(Math.random() * numbers.length)];
+        currentAnswer = selectedNumber.value.toString();
+        document.getElementById('question').textContent = `Toque no número ${selectedNumber.display}`;
+        speak(`Toque no número ${selectedNumber.display}`);
+        let options = [selectedNumber];
+        while (options.length < maxOptions) {
+          let randomItem = numbers[Math.floor(Math.random() * numbers.length)];
+          if (!options.includes(randomItem)) options.push(randomItem);
+        }
+        options = options.sort(() => Math.random() - 0.5);
+        options.forEach(item => {
+          const button = document.createElement('div');
+          button.className = 'option';
+          button.textContent = item.display;
+          button.onclick = () => checkAnswer(item.value.toString());
+          optionsContainer.appendChild(button);
+        });
+      } else if (currentMode === 'colors') {
+        const isMix = Math.random() < 0.3;
+        if (isMix) {
+          const mix = colorMixes[Math.floor(Math.random() * colorMixes.length)];
+          currentAnswer = mix.answer;
+          document.getElementById('question').textContent = `Qual é a cor de ${mix.question}?`;
+          speak(`Qual é a cor de ${mix.question}?`);
+        } else {
+          const selectedColor = colors[Math.floor(Math.random() * colors.length)];
+          currentAnswer = selectedColor.name;
+          document.getElementById('question').textContent = `Toque na cor ${selectedColor.name}`;
+          speak(`Toque na cor ${selectedColor.name}`);
+        }
+        let options = [currentAnswer];
+        let allColors = colors.map(c => c.name).concat(['Laranja']);
+        while (options.length < maxOptions) {
+          let randomItem = allColors[Math.floor(Math.random() * allColors.length)];
+          if (!options.includes(randomItem)) options.push(randomItem);
+        }
+        options = options.sort(() => Math.random() - 0.5);
+        options.forEach(item => {
+          const button = document.createElement('div');
+          button.className = 'color-option';
+          const colorCode = colors.find(c => c.name === item)?.color || (item === 'Laranja' ? '#FFA500' : '#000000');
+          button.style.backgroundColor = colorCode;
+          button.onclick = () => checkAnswer(item);
+          optionsContainer.appendChild(button);
+        });
+      } else if (currentMode === 'fruits') {
+        const selectedFruit = fruits[Math.floor(Math.random() * fruits.length)];
+        currentAnswer = selectedFruit.name;
+        document.getElementById('question').textContent = `Toque na fruta ${selectedFruit.name}`;
+        speak(`Toque na fruta ${selectedFruit.name}`);
+        let options = [selectedFruit];
+        while (options.length < maxOptions) {
+          let randomItem = fruits[Math.floor(Math.random() * fruits.length)];
+          if (!options.includes(randomItem)) options.push(randomItem);
+        }
+        options = options.sort(() => Math.random() - 0.5);
+        options.forEach(item => {
+          const button = document.createElement('div');
+          button.className = 'image-option';
+          const img = document.createElement('img');
+          img.src = item.image;
+          img.alt = item.name;
+          img.onerror = () => console.error(`Erro ao carregar imagem: ${item.image}`);
+          button.appendChild(img);
+          button.onclick = () => checkAnswer(item.name);
+          optionsContainer.appendChild(button);
+        });
+      } else if (currentMode === 'shapes') {
+        const selectedShape = shapes[Math.floor(Math.random() * shapes.length)];
+        currentAnswer = selectedShape.name;
+        document.getElementById('question').textContent = `Toque na figura ${selectedShape.name}`;
+        speak(`Toque na figura ${selectedShape.name}`);
+        let options = [selectedShape];
+        while (options.length < maxOptions) {
+          let randomItem = shapes[Math.floor(Math.random() * shapes.length)];
+          if (!options.includes(randomItem)) options.push(randomItem);
+        }
+        options = options.sort(() => Math.random() - 0.5);
+        options.forEach(item => {
+          const button = document.createElement('div');
+          button.className = 'image-option';
+          const img = document.createElement('img');
+          img.src = item.image;
+          img.alt = item.name;
+          img.onerror = () => console.error(`Erro ao carregar imagem: ${item.image}`);
+          button.appendChild(img);
+          button.onclick = () => checkAnswer(item.name);
+          optionsContainer.appendChild(button);
+        });
+      }
+    }
+
+    function checkAnswer(selected) {
+      const feedback = document.getElementById('feedback');
+      if (selected === currentAnswer) {
+        score += 10;
+        acertos += 1;
+        feedback.textContent = 'Correto! Muito bem!';
+        feedback.className = 'correct';
+        feedback.style.color = 'green';
+        if (soundEnabled) {
+          try {
+            document.getElementById('correct-sound').play();
+          } catch (e) {
+            console.error('Erro ao reproduzir som de acerto:', e);
+          }
+        }
+        if (navigator.vibrate) navigator.vibrate(200);
+      } else {
+        erros += 1;
+        feedback.textContent = 'Tente novamente!';
+        feedback.className = 'wrong';
+        feedback.style.color = 'red';
+        if (soundEnabled) {
+          try {
+            document.getElementById('wrong-sound').play();
+          } catch (e) {
+            console.error('Erro ao reproduzir som de erro:', e);
+          }
+        }
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      }
+      updateScore();
+      setTimeout(loadQuestion, 2000);
+    }
+
+    function updateScore() {
+      document.getElementById('score').textContent = `Pontuação: ${score}`;
+    }
+
+    function backToModes() {
+      if (currentMode) {
+        const record = {
+          data: new Date().toISOString().split('T')[0],
+          modalidade: {
+            alphabet: 'Alfabeto',
+            numbers: 'Números',
+            colors: 'Cores',
+            fruits: 'Frutas',
+            shapes: 'Figuras'
+          }[currentMode],
+          pontuacao: score,
+          acertos: acertos,
+          erros: erros,
+          aluno: currentStudentName
+        };
+        try {
+          const transaction = db.transaction(['desempenho'], 'readwrite');
+          const store = transaction.objectStore('desempenho');
+          store.add(record);
+        } catch (e) {
+          console.error('Erro ao salvar desempenho:', e);
+          localStorage.setItem('tempDesempenho', JSON.stringify(record));
+          alert('Dados salvos temporariamente. Tente novamente mais tarde.');
+        }
+      }
+
+      transitionToScreen('mode-screen', ['welcome-screen', 'name-screen', 'game-screen', 'history-screen']);
+      document.getElementById('mode-title').textContent = `Escolha uma Aventura, ${currentStudentName}!`;
+      currentMode = '';
+    }
+
+    function showHistory() {
+      transitionToScreen('history-screen', ['welcome-screen', 'name-screen', 'mode-screen', 'game-screen']);
+      const transaction = db.transaction(['desempenho'], 'readonly');
+      const store = transaction.objectStore('desempenho');
+      const request = store.getAll();
+
+      request.onsuccess = function(event) {
+        const records = event.target.result;
+        const tbody = document.getElementById('history-body');
+        tbody.innerHTML = '';
+
+        records.sort((a, b) => new Date(b.data) - new Date(a.data));
+        records.forEach(record => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${record.data}</td>
+            <td>${record.modalidade}</td>
+            <td>${record.pontuacao}</td>
+            <td>${record.acertos}</td>
+            <td>${record.erros}</td>
+            <td>${record.aluno || 'Sem nome'}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      };
+
+      request.onerror = function(event) {
+        console.error('Erro ao recuperar histórico:', event.target.errorCode);
+        alert('Erro ao carregar o histórico. Tente novamente.');
+      };
+    }
+
+    function exportHistory() {
+      const transaction = db.transaction(['desempenho'], 'readonly');
+      const store = transaction.objectStore('desempenho');
+      const request = store.getAll();
+      request.onsuccess = function(event) {
+        const records = event.target.result;
+        let csv = 'Data,Modalidade,Pontuação,Acertos,Erros,Aluno\n';
+        records.forEach(r => {
+          csv += `${r.data},${r.modalidade},${r.pontuacao},${r.acertos},${r.erros},${r.aluno || 'Sem nome'}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'historico.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+      request.onerror = function(event) {
+        console.error('Erro ao exportar histórico:', event.target.errorCode);
+        alert('Erro ao exportar o histórico. Tente novamente.');
+      };
+    }
+
+    function exportHistoryToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      doc.setFontSize(16);
+      doc.text('Histórico de Desempenho - Aventura do Saber', 20, 20);
+
+      const transaction = db.transaction(['desempenho'], 'readonly');
+      const store = transaction.objectStore('desempenho');
+      const request = store.getAll();
+
+      request.onsuccess = function(event) {
+        const records = event.target.result;
+        const data = records.sort((a, b) => new Date(b.data) - new Date(a.data)).map(r => [
+          r.data,
+          r.modalidade,
+          r.pontuacao.toString(),
+          r.acertos.toString(),
+          r.erros.toString(),
+          r.aluno || 'Sem nome'
+        ]);
+
+        doc.autoTable({
+          head: [['Data', 'Modalidade', 'Pontuação', 'Acertos', 'Erros', 'Aluno']],
+          body: data,
+          startY: 30,
+          styles: { fontSize: 10, cellPadding: 2 },
+          headStyles: { fillColor: [76, 175, 80] },
+          alternateRowStyles: { fillColor: [249, 249, 249] }
+        });
+
+        doc.save('historico.pdf');
+      };
+
+      request.onerror = function(event) {
+        console.error('Erro ao exportar histórico em PDF:', event.target.errorCode);
+        alert('Erro ao exportar o histórico em PDF. Tente novamente.');
+      };
+    }
+  </script>
+</body>
+</html>
